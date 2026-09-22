@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "causal-coherence"
+version = "0.1.0"
+description = "Extracción de narrativas con coherencia causal sobre corpus de noticias (Capstone)."
+requires-python = ">=3.11"
+dependencies = ["numpy", "pandas"]
+
+[project.optional-dependencies]
+# Ambiente rollinglda: preprocesamiento + RollingLDA
+lda = ["spacy", "nltk", "ttta"]
+# Ambiente capstone: Narrative Trails (repo externo, ver README)
+narrative = ["umap-learn", "hdbscan", "networkx", "scikit-learn"]
+
+[tool.setuptools.packages.find]
+where = ["src"]

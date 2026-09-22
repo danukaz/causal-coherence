@@ -1,0 +1,27 @@
+# --- Datos y artefactos generados ---
+# Los datasets del laboratorio viven fuera del repo (../Datasets);
+# aquí solo quedan modelos y resultados regenerables.
+data/
+*.pickle
+*.pkl
+*.npy
+*.npz
+*.jsonl
+
+# --- Cache de Python ---
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# --- Empaquetado ---
+*.egg-info/
+build/
+dist/
+
+# --- Entornos ---
+.venv/
+venv/
+.env
