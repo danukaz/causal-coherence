@@ -21,22 +21,26 @@ dependencies = [
     "matplotlib",
     "seaborn",
     "pillow",
-    # --- Fijados por reproducibilidad, NO por compatibilidad ---
-    # Con versiones más nuevas todo instala sin conflictos, pero la
-    # proyección UMAP (depende de scipy vía la inicialización espectral)
-    # y el clustering de HDBSCAN (hdbscan + scikit-learn) cambian, y con
-    # ellos el hash de la matriz de coherencia de baseline_narrative.py
-    # (referencia: 63d0faab065a6f4c). Estas son las versiones con que se
-    # generaron los resultados de results/. numba 0.60 exige numpy<2.1.
-    "umap-learn==0.5.7",
-    "pynndescent==0.5.13",
-    "numba==0.60.0",
-    "llvmlite==0.43.0",
+    # --- Fijados por reproducibilidad, no por compatibilidad ---
+    # Con versiones más nuevas todo instala sin conflictos, pero cambia el
+    # hash de baseline_narrative.py (referencia 63d0faab065a6f4c).
+    # Detalle y evidencia en docs/reproducibilidad.md.
+    #
+    # Proyección UMAP:
+    "scipy==1.13.1",        # inicialización espectral de UMAP (eigsh/lobpcg); con 1.18 cambia la proyección
+    "umap-learn==0.5.7",    # la proyección misma
+    "pynndescent==0.5.13",  # grafo de vecinos aproximados que construye UMAP
+    "numba==0.60.0",        # compila UMAP y pynndescent; fija el techo Python <3.13
+    "llvmlite==0.43.0",     # backend que exige numba 0.60
+    "numpy==2.0.2",         # numba 0.60 exige numpy<2.1; es la versión de la referencia
+    # Agrupamiento en tópicos (cambia aunque la proyección UMAP sea la misma):
     "hdbscan==0.8.40",
-    "scikit-learn==1.6.1",
-    "scipy==1.13.1",
-    "numpy==2.0.2",
+    "scikit-learn==1.6.1",  # hdbscan lo usa; se cambió junto con hdbscan, no se sabe cuál de los dos influye
 ]
+
+[project.optional-dependencies]
+# Kernel y ejecutor para los notebooks de Examples/ (scripts/run_notebooks.py)
+notebooks = ["ipykernel", "nbclient", "nbformat"]
 
 [tool.setuptools.packages.find]
 where = ["src"]

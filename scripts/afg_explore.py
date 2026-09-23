@@ -9,7 +9,13 @@ Afganistán, para comparar contra los resultados ya obtenidos con bpoil.
 import numpy as np
 
 from causal_coherence.data_loading import AFGHANISTAN_DIR, load_subset
-from causal_coherence.narrative import CONFIG, Storyline, build_landscape, count_topics
+from causal_coherence.narrative import (
+    CONFIG,
+    Storyline,
+    build_landscape,
+    count_topics,
+    node_degree_report,
+)
 
 SOURCE_LABEL = "NEWS-TLS Entities (Taliban)"
 
@@ -50,12 +56,10 @@ def main():
     Storyline.print_narrative_path(df, landscape.cluster_labels, storyline.chain, CONFIG)
 
     # --- Diagnóstico: ¿el destino es un nodo periférico en el grafo? ---
-    grados = dict(landscape.nx_graph.degree())
-    grado_destino = grados[TGT_NODE]
-    grado_promedio = sum(grados.values()) / len(grados)
-    print(f"\nGrado del nodo destino ({TGT_NODE}): {grado_destino}")
-    print(f"Grado promedio de todo el grafo: {grado_promedio:.1f}")
-    if grado_destino < grado_promedio * 0.5:
+    report = node_degree_report(landscape, TGT_NODE)
+    print(f"\nGrado del nodo destino ({TGT_NODE}): {report['degree']}")
+    print(f"Grado promedio de todo el grafo: {report['mean_degree']:.1f}")
+    if report["peripheral"]:
         print("-> El destino está notablemente por debajo del promedio: nodo periférico.")
 
 

@@ -14,12 +14,13 @@ import numpy as np
 import pandas as pd
 
 from causal_coherence.config import OUTPUT_DIR
-from causal_coherence.data_loading import load_bpoil_full
+from causal_coherence.data_loading import documents_between, load_bpoil_full
 from causal_coherence.narrative import (
     CONFIG,
     Storyline,
     build_landscape,
     count_topics,
+    extract_alternatives,
     matrix_hash,
 )
 
@@ -37,8 +38,7 @@ N_PATHS = 3
 
 def show_candidates(df: pd.DataFrame, start: str, end: str, n: int = 10):
     """Muestra documentos en una ventana de fechas, para elegir origen/destino con criterio."""
-    mask = (df["date"] >= start) & (df["date"] <= end)
-    print(df.loc[mask, ["date", "title"]].head(n).to_string())
+    print(documents_between(df, start, end).head(n).to_string())
 
 
 def main():
@@ -68,23 +68,10 @@ def main():
     coherence_hash = matrix_hash(landscape.sparse_coherence)
     print(f"Hash de la matriz de coherencia: {coherence_hash}")
 
-    # Varias narrativas alternativas entre el mismo par de extremos,
-    # excluyendo en cada vuelta los nodos intermedios ya usados por las
-    # anteriores -- el mismo mecanismo de "k storylines distintas" que
-    # vimos en el notebook de referencia.
-    hidden_nodes = []
+    storylines = extract_alternatives(landscape, SRC_NODE, TGT_NODE, N_PATHS)
     resultados = []
 
-    for i in range(N_PATHS):
-        narrative_path, _ = landscape.extract_narrative(
-            SRC_NODE, TGT_NODE, hidden_nodes=hidden_nodes
-        )
-
-        if not narrative_path:
-            print(f"\nAlternativa {i}: no se encontró camino (nodos disponibles agotados).")
-            break
-
-        storyline = Storyline(landscape, narrative_path)
+    for i, storyline in enumerate(storylines):
         print(f"\n{'=' * 13} Alternativa {i} {'=' * 13}")
         print("Path (índices):", storyline.chain)
         print("Bottleneck:", storyline.bottleneck_weight())
@@ -93,13 +80,15 @@ def main():
 
         Storyline.print_narrative_path(df, landscape.cluster_labels, storyline.chain, CONFIG)
 
-        hidden_nodes.extend(storyline.chain[1:-1])
         resultados.append({
             "alternativa": i,
             "chain": storyline.chain,
             "bottleneck": storyline.bottleneck_weight(),
             "reliability": storyline.reliability(),
         })
+
+    if len(storylines) < N_PATHS:
+        print(f"\nAlternativa {len(storylines)}: no se encontró camino (nodos disponibles agotados).")
 
     if not resultados:
         print("No se encontró ningún camino entre esos dos documentos.")

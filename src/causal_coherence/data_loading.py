@@ -78,6 +78,12 @@ def build_dataframe(docs: list[dict]) -> pd.DataFrame:
     return df
 
 
+def documents_between(df: pd.DataFrame, start: str, end: str) -> pd.DataFrame:
+    """Fecha y título de los documentos en una ventana de fechas (ambos extremos incluidos)."""
+    mask = (df["date"] >= start) & (df["date"] <= end)
+    return df.loc[mask, ["date", "title"]]
+
+
 def sort_by_date(df: pd.DataFrame, embeddings: np.ndarray):
     """Ordena documentos y embeddings juntos por fecha, preservando la alineación."""
     order = df["date"].argsort(kind="stable").to_numpy()

@@ -9,9 +9,12 @@ dependencies:
   - python=3.12
   - pip
   - pip:
-      - -e .
+      - -e .[notebooks]
       - en_core_web_sm @ https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.8.0/en_core_web_sm-3.8.0-py3-none-any.whl
 variables:
   # Fijo al activar el ambiente: hace determinista el hash de strings
   # (orden de iteración de sets/dicts de tokens) sin pasos manuales.
   PYTHONHASHSEED: "0"
+  # En Windows, `jupyter execute` abre los notebooks con la codificación del
+  # sistema (cp1252) y corrompe los acentos; con esto usa UTF-8.
+  PYTHONUTF8: "1"

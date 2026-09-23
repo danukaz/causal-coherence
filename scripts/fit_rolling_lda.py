@@ -21,28 +21,17 @@ from causal_coherence.preprocessing import (
 from causal_coherence.topic_model import (
     MODEL_PATH,
     TRUNCATE_AFTER,
+    chunk_summary,
     fit_topic_model,
     truncate_to_coverage_window,
 )
 
 
 def print_chunk_summary(roll, df) -> None:
-    """
-    Imprime cuántos documentos tiene cada chunk y su rango de fechas
-    real, calculado directamente sobre el DataFrame ordenado por fecha
-    -- no depende de la etiqueta que muestra la consola durante el
-    ajuste, que viene retrasada un chunk.
-    """
-    df_sorted = df.sort_values("date").reset_index(drop=True)
-    starts = roll.chunk_indices["chunk_start"].tolist() + [len(df_sorted)]
-
+    """Imprime cuántos documentos tiene cada chunk y su rango de fechas real."""
     print("\nResumen real de chunks:")
-    for i in range(len(roll.chunk_indices)):
-        lo, hi = starts[i], starts[i + 1]
-        n_docs = hi - lo
-        fecha_inicio = df_sorted["date"].iloc[lo].date()
-        fecha_fin = df_sorted["date"].iloc[hi - 1].date()
-        print(f"  Chunk {i}: {n_docs} documentos, de {fecha_inicio} a {fecha_fin}")
+    for i, row in chunk_summary(roll, df).iterrows():
+        print(f"  Chunk {i}: {row['documentos']} documentos, de {row['desde']} a {row['hasta']}")
 
 
 def main():

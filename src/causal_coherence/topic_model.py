@@ -8,6 +8,7 @@ import pandas as pd
 from ttta.methods.rolling_lda import RollingLDA
 
 from causal_coherence.config import OUTPUT_DIR
+from causal_coherence.data_loading import SOURCE_LABEL, build_dataframe, load_filtered
 
 MODEL_PATH = OUTPUT_DIR / "roll_lda_bpoil.pickle"
 
@@ -75,3 +76,41 @@ def fit_topic_model(df: pd.DataFrame) -> RollingLDA:
     roll = RollingLDA(**LDA_CONFIG)
     roll.fit(df, text_column="preprocessed_text", date_column="date")
     return roll
+
+
+def chunk_summary(roll: RollingLDA, df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Documentos y rango de fechas real de cada chunk, calculado sobre el
+    DataFrame ordenado por fecha -- no depende de la etiqueta que muestra
+    la consola durante el ajuste, que viene retrasada un chunk.
+    """
+    df_sorted = df.sort_values("date", kind="stable").reset_index(drop=True)
+    starts = roll.chunk_indices["chunk_start"].tolist() + [len(df_sorted)]
+    rows = []
+    for i in range(len(roll.chunk_indices)):
+        lo, hi = starts[i], starts[i + 1]
+        rows.append({
+            "documentos": hi - lo,
+            "desde": df_sorted["date"].iloc[lo].date(),
+            "hasta": df_sorted["date"].iloc[hi - 1].date(),
+        })
+    return pd.DataFrame(rows).rename_axis("chunk")
+
+
+def load_topic_model(path=MODEL_PATH) -> RollingLDA:
+    """Carga un modelo ya ajustado (por defecto el que guarda fit_rolling_lda.py)."""
+    roll = RollingLDA(**LDA_CONFIG)
+    roll.load(str(path))
+    return roll
+
+
+def training_documents() -> pd.DataFrame:
+    """
+    Documentos con que se ajusta el modelo, en el mismo orden que las filas
+    de su matriz documento-tópico: bpoil truncado a TRUNCATE_AFTER y
+    ordenado por fecha con orden estable, que es lo que hace
+    RollingLDA.fit internamente. El modelo guardado no incluye las fechas.
+    """
+    docs, _ = load_filtered(SOURCE_LABEL)
+    df = truncate_to_coverage_window(build_dataframe(docs))
+    return df.sort_values("date", kind="stable").reset_index(drop=True)
