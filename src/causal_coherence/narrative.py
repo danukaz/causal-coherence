@@ -216,15 +216,20 @@ def node_degree_report(landscape: NarrativeLandscape, node: int) -> dict:
     Grado de un nodo (entrante + saliente) comparado con el resto del grafo.
     percentile es la fracción de nodos con grado estrictamente menor; se
     marca como periférico si su grado es menor que la mitad del promedio.
+
+    El diagnóstico vale solo para el landscape que se le pasa: un mismo
+    índice es otro documento en otro corpus.
     """
     degrees = dict(landscape.nx_graph.degree())
+    values = np.fromiter(degrees.values(), dtype=float)
     degree = degrees[node]
-    mean_degree = sum(degrees.values()) / len(degrees)
+    mean_degree = float(values.mean())
     return {
         "node": node,
         "degree": degree,
         "mean_degree": mean_degree,
-        "percentile": sum(1 for g in degrees.values() if g < degree) / len(degrees),
+        "median_degree": float(np.median(values)),
+        "percentile": float((values < degree).mean()),
         "peripheral": degree < mean_degree * 0.5,
     }
 
@@ -233,9 +238,12 @@ def random_pair_paths(landscape: NarrativeLandscape, dates: pd.Series, n_pairs: 
     """
     Extrae la narrativa entre n_pairs pares de documentos al azar (el de
     índice menor como origen) y registra su separación en días, el largo
-    del camino y su bottleneck. Sirve para saber qué largo de camino es
-    típico en un grafo, independiente de un par de extremos en particular.
+    del camino, su bottleneck y el percentil de grado de cada extremo.
+    Sirve para saber qué largo de camino es típico en un grafo,
+    independiente de un par de extremos en particular.
     """
+    degrees = dict(landscape.nx_graph.degree())
+    values = np.fromiter(degrees.values(), dtype=float)
     rng = np.random.default_rng(seed)
     rows = []
     for _ in range(n_pairs):
@@ -247,5 +255,7 @@ def random_pair_paths(landscape: NarrativeLandscape, dates: pd.Series, n_pairs: 
             "días": (dates.iloc[tgt] - dates.iloc[src]).days,
             "largo": len(path) if path else np.nan,
             "bottleneck": Storyline(landscape, path).bottleneck_weight() if path else np.nan,
+            "pct_src": float((values < degrees[src]).mean()),
+            "pct_tgt": float((values < degrees[tgt]).mean()),
         })
     return pd.DataFrame(rows)

@@ -21,6 +21,7 @@ from causal_coherence.preprocessing import (
 from causal_coherence.topic_model import (
     MODEL_PATH,
     TRUNCATE_AFTER,
+    check_hash_seed,
     chunk_summary,
     fit_topic_model,
     truncate_to_coverage_window,
@@ -35,6 +36,7 @@ def print_chunk_summary(roll, df) -> None:
 
 
 def main():
+    check_hash_seed()
     docs_bpoil, _ = load_filtered(SOURCE_LABEL)
     start, end = date_range(docs_bpoil)
     print(f"Documentos en '{TOPIC}': {len(docs_bpoil)} ({start} a {end})")

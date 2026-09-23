@@ -4,6 +4,9 @@ topic_model.py
 Configuración y ajuste de RollingLDA sobre bpoil.
 """
 
+import os
+import warnings
+
 import pandas as pd
 from ttta.methods.rolling_lda import RollingLDA
 
@@ -11,6 +14,10 @@ from causal_coherence.config import OUTPUT_DIR
 from causal_coherence.data_loading import SOURCE_LABEL, build_dataframe, load_filtered
 
 MODEL_PATH = OUTPUT_DIR / "roll_lda_bpoil.pickle"
+
+# El modelo de referencia (data/roll_lda_bpoil.pickle, θ con hash
+# 2d6dc4b1469dbacf) se ajustó con PYTHONHASHSEED=0.
+REFERENCE_HASH_SEED = "0"
 
 # EXPERIMENTO DE CONTROL: la primera corrida (chunks mensuales
 # automáticos, prototype=100) NO mostró "broken models" en agosto ni
@@ -70,6 +77,31 @@ def truncate_to_coverage_window(df: pd.DataFrame) -> pd.DataFrame:
     llama debe reportar cuántos documentos se dejan fuera.
     """
     return df[df["date"] <= TRUNCATE_AFTER].reset_index(drop=True)
+
+
+def check_hash_seed() -> None:
+    """
+    seed=42 no alcanza para repetir el modelo. ttta arma el vocabulario
+    recorriendo un set de strings (ttta.preprocessing.preprocess.create_dtm),
+    así que el id de cada palabra depende de PYTHONHASHSEED, y con otros ids
+    el mismo muestreo da otros tópicos (ver docs/reproducibilidad.md). Sin
+    PYTHONHASHSEED fijo el ajuste no es repetible, así que se corta antes de
+    gastar los ~20 minutos; con un valor distinto al de referencia solo se
+    avisa, porque puede ser a propósito.
+    """
+    value = os.environ.get("PYTHONHASHSEED")
+    if value is None or value == "random":
+        raise RuntimeError(
+            "PYTHONHASHSEED no está fijo, así que el orden del vocabulario de ttta (y los "
+            "tópicos) cambiaría entre corridas. Activar el ambiente (conda activate "
+            f"causal-coherence) o definir PYTHONHASHSEED={REFERENCE_HASH_SEED}."
+        )
+    if value != REFERENCE_HASH_SEED:
+        warnings.warn(
+            f"PYTHONHASHSEED={value}: el modelo va a ser distinto al de referencia, "
+            f"que se ajustó con PYTHONHASHSEED={REFERENCE_HASH_SEED}.",
+            stacklevel=2,
+        )
 
 
 def fit_topic_model(df: pd.DataFrame) -> RollingLDA:

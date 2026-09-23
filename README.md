@@ -90,18 +90,31 @@ Si cambias `pyproject.toml`, actualiza el ambiente con
 > directamente a `...\envs\causal-coherence\python.exe` sin activarlo
 > (por ejemplo desde algunas configuraciones de IDE), no se fija.
 
+Para los notebooks, registra además el kernel del ambiente una vez (con
+el ambiente activado). El kernel lleva las dos variables en su propia
+definición, así que las tiene aunque el editor lo lance sin activar el
+ambiente:
+
+```bash
+python -m ipykernel install --user --name causal-coherence --display-name "Python 3 (causal-coherence)" --env PYTHONHASHSEED 0 --env PYTHONUTF8 1
+```
+
 ## Uso
 
 ```bash
 conda activate causal-coherence
 python scripts/find_chunks.py        # explora umbrales de razón tipo-token
 python scripts/fit_rolling_lda.py    # guarda data/roll_lda_bpoil.pickle
-python scripts/baseline_narrative.py # guarda data/baseline_<hash>.pkl
+python scripts/baseline_narrative.py # guarda data/baseline_<hash>_15-572.pkl
 python scripts/afg_explore.py
 ```
 
 Los scripts se pueden correr desde cualquier directorio: las salidas
-siempre van a `data/` en la raíz del repo.
+siempre van a `data/` en la raíz del repo. `baseline_narrative.py` usa el
+par de referencia 15 → 572; para otro par, se pasan origen y destino
+(`python scripts/baseline_narrative.py 3 975`). En cada corrida imprime el
+grado de los dos extremos y avisa si alguno es periférico. Por qué hay dos
+pares de referencia: [results/README.md](results/README.md).
 
 ## Notebooks
 
@@ -111,7 +124,7 @@ siempre van a `data/` en la raíz del repo.
 | Notebook                             | Qué muestra                                                                      |
 |--------------------------------------|----------------------------------------------------------------------------------|
 | `rolling_lda_bpoil.ipynb`            | Palabras por tópico, matriz theta y prevalencia semanal de tres tópicos           |
-| `narrative_trails_bpoil.ipynb`       | Narrativas alternativas entre pares de documentos de bpoil, con sus títulos       |
+| `narrative_trails_bpoil.ipynb`       | Los dos pares de referencia de bpoil, el grado de sus extremos y pares al azar    |
 | `narrative_trails_afghanistan.ipynb` | Lo mismo sobre el subset Taliban, más el diagnóstico de grado y el experimento de pares al azar |
 
 `rolling_lda_bpoil.ipynb` carga `data/roll_lda_bpoil.pickle`, así que
@@ -136,12 +149,14 @@ idénticos y git no muestra diferencias.
 ## Reproducibilidad
 
 - RollingLDA usa `seed=42`; los hiperparámetros y su justificación
-  están documentados en `topic_model.py`.
+  están documentados en `topic_model.py`. La semilla no alcanza sola:
+  ttta ordena el vocabulario con un `set` de strings, así que el modelo
+  depende también de `PYTHONHASHSEED`. El ambiente lo fija en 0 y
+  `fit_rolling_lda.py` no arranca si no está fijo.
 - `baseline_narrative.py` nombra el resultado con un hash del contenido
   de la matriz de coherencia, así dos corridas con el mismo grafo
-  producen el mismo archivo. `results/corrida_1.txt` y
-  `results/corrida_2.txt` son dos corridas de referencia de ese script
-  (hash `63d0faab065a6f4c`).
+  producen el mismo archivo. Las corridas de referencia de ese script
+  están en `results/` (hash `63d0faab065a6f4c`).
 
 `pyproject.toml` fija las versiones de scipy, UMAP y HDBSCAN porque con
 versiones más nuevas cambia ese hash. Antes de actualizar una de ellas,

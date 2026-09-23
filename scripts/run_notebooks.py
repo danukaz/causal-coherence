@@ -15,11 +15,24 @@ import sys
 from pathlib import Path
 
 import nbformat
+from jupyter_client.kernelspec import KernelSpecManager, NoSuchKernel
 from nbclient import NotebookClient
 
 from causal_coherence.config import PROJECT_ROOT
 
 EXAMPLES_DIR = PROJECT_ROOT / "Examples"
+
+# Kernel registrado con `python -m ipykernel install --user --name causal-coherence ...`
+# (ver README). Si no está, "python3" es el kernel del ambiente activo.
+KERNEL_NAME = "causal-coherence"
+
+
+def kernel_name() -> str:
+    try:
+        KernelSpecManager().get_kernel_spec(KERNEL_NAME)
+        return KERNEL_NAME
+    except NoSuchKernel:
+        return "python3"
 
 
 def run(path: Path) -> None:
@@ -29,7 +42,7 @@ def run(path: Path) -> None:
     NotebookClient(
         nb,
         timeout=1200,
-        kernel_name="python3",
+        kernel_name=kernel_name(),
         record_timing=False,
         resources={"metadata": {"path": str(path.parent)}},
     ).execute()
