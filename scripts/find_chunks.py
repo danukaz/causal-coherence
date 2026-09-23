@@ -3,7 +3,7 @@ find_chunks.py
 
 Explora distintos umbrales de razón tipo-token acumulada para decidir
 los cortes de chunk de RollingLDA de forma reproducible, en vez de ir
-fusionando meses a mano por prueba y error. Ambiente: rollinglda.
+fusionando meses a mano por prueba y error.
 
 Reutiliza las funciones del paquete causal_coherence -- no las reescribe.
 """

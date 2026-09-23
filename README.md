@@ -26,7 +26,8 @@ causal-coherence/
 │   └── afg_explore.py        # Exploración rápida sobre el subset Taliban
 ├── results/                  # Salidas de consola de corridas de referencia
 ├── data/                     # Modelos y resultados generados (ignorado por git)
-└── pyproject.toml
+├── environment.yml           # Ambiente conda único (Python, modelo de spaCy, PYTHONHASHSEED)
+└── pyproject.toml            # Dependencias de Python
 ```
 
 ## Datos y dependencias externas
@@ -50,45 +51,42 @@ Si están en otro lugar, define estas variables de entorno:
 | `CC_DATASETS_DIR`         | `../Datasets`            |
 | `CC_NARRATIVE_TRAILS_DIR` | `../narrative-trails`    |
 
-## Ambientes
-
-El proyecto usa dos ambientes conda, porque ttta y Narrative Trails
-tienen dependencias que no conviven bien:
-
-| Ambiente     | Python | Para qué                                   | Scripts                                   |
-|--------------|--------|--------------------------------------------|-------------------------------------------|
-| `rollinglda` | 3.12   | spaCy, NLTK, ttta (RollingLDA)             | `find_chunks.py`, `fit_rolling_lda.py`    |
-| `capstone`   | 3.11   | UMAP, HDBSCAN, networkx (Narrative Trails) | `baseline_narrative.py`, `afg_explore.py` |
-
-`data_loading` y `config` solo dependen de numpy y pandas, así que
-funcionan en ambos.
+`Library/` de narrative-trails no es un paquete instalable (el repo no
+tiene `setup.py` ni `pyproject.toml`), así que `narrative.py` lo agrega
+a `sys.path` desde `CC_NARRATIVE_TRAILS_DIR`. No hace falta hacer nada a
+mano: basta con que la carpeta exista.
 
 ## Instalación
 
-En **cada** ambiente, desde la raíz del repo:
+Un solo ambiente conda (`causal-coherence`, Python 3.12) para todo el
+pipeline. Desde la raíz del repo:
 
 ```bash
-pip install -e . --no-deps
+conda env create -f environment.yml
 ```
 
-`--no-deps` evita que pip toque los paquetes que ya instaló conda. Si
-armas un ambiente desde cero, puedes usar los extras
-`pip install -e ".[lda]"` o `pip install -e ".[narrative]"`.
-
-En el ambiente `rollinglda` hace falta además el modelo de spaCy:
+Eso instala el paquete en modo editable con todas sus dependencias, el
+modelo `en_core_web_sm` de spaCy y deja fijo `PYTHONHASHSEED=0` como
+variable **del propio ambiente**: se aplica sola cada vez que haces
+`conda activate causal-coherence`, sin pasos manuales. Para comprobarlo:
 
 ```bash
-python -m spacy download en_core_web_sm
+conda env config vars list -n causal-coherence
 ```
+
+Si cambias `pyproject.toml`, actualiza el ambiente con
+`conda env update -f environment.yml`.
+
+> La variable solo se aplica al **activar** el ambiente. Si llamas
+> directamente a `...\envs\causal-coherence\python.exe` sin activarlo
+> (por ejemplo desde algunas configuraciones de IDE), no se fija.
 
 ## Uso
 
 ```bash
-conda activate rollinglda
+conda activate causal-coherence
 python scripts/find_chunks.py        # explora umbrales de razón tipo-token
 python scripts/fit_rolling_lda.py    # guarda data/roll_lda_bpoil.pickle
-
-conda activate capstone
 python scripts/baseline_narrative.py # guarda data/baseline_<hash>.pkl
 python scripts/afg_explore.py
 ```
@@ -103,4 +101,17 @@ siempre van a `data/` en la raíz del repo.
 - `baseline_narrative.py` nombra el resultado con un hash del contenido
   de la matriz de coherencia, así dos corridas con el mismo grafo
   producen el mismo archivo. `results/corrida_1.txt` y
-  `results/corrida_2.txt` son dos corridas de referencia de ese script.
+  `results/corrida_2.txt` son dos corridas de referencia de ese script
+  (hash `63d0faab065a6f4c`).
+- **Versiones fijadas en `pyproject.toml`.** Con versiones más nuevas
+  de scipy, umap-learn/pynndescent/numba y hdbscan/scikit-learn todo
+  instala sin conflictos, pero los resultados de Narrative Trails
+  cambian: la proyección UMAP depende de scipy (inicialización
+  espectral) y el clustering depende de hdbscan + scikit-learn. Con
+  las versiones fijadas, el ambiente único reproduce bit a bit los
+  cuatro scripts de los dos ambientes anteriores (`rollinglda`, Python
+  3.12, y `capstone`, Python 3.11). Antes de actualizar cualquiera de
+  esos pines, vuelve a correr `baseline_narrative.py` y compara el hash.
+- Ni ttta ni sus dependencias exigen Python 3.12: ese requisito venía
+  de `cet` (repo t2s2026), que el proyecto ya no usa. El techo `<3.13`
+  lo pone numba 0.60.

@@ -3,7 +3,7 @@ baseline_narrative.py
 
 Semana 4: extracción de la narrativa de línea base de extremo a extremo,
 usando el método original de Narrative Trails (UMAP + HDBSCAN) sobre el
-corpus principal (bpoil), con reproducibilidad resuelta. Ambiente: capstone.
+corpus principal (bpoil), con reproducibilidad resuelta.
 
 A diferencia de fit_rolling_lda.py (semana 3), aquí NO se trunca el
 corpus ni se usa RollingLDA -- se usa bpoil completo (1133 documentos)

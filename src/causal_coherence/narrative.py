@@ -4,7 +4,7 @@ narrative.py
 Envoltorio mínimo sobre el método original de Narrative Trails
 (UMAP + HDBSCAN + grafo de coherencia). El código de referencia vive en
 el repo narrative-trails (ver config.NARRATIVE_TRAILS_DIR) y se importa
-desde ahí, sin copiarlo. Requiere el ambiente capstone.
+desde ahí, sin copiarlo.
 """
 
 import hashlib

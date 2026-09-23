@@ -1,8 +1,7 @@
 """
 topic_model.py
 
-Configuración y ajuste de RollingLDA sobre bpoil. Requiere el ambiente
-rollinglda (ttta).
+Configuración y ajuste de RollingLDA sobre bpoil.
 """
 
 import pandas as pd

@@ -4,7 +4,6 @@ afg_explore.py
 Exploración rápida, NO parte formal del proyecto: correr el método
 original de Narrative Trails sobre el subset "Taliban" del corpus de
 Afganistán, para comparar contra los resultados ya obtenidos con bpoil.
-Ambiente: capstone.
 """
 
 import numpy as np

@@ -1,0 +1,17 @@
+# Ambiente único del proyecto. Crear con:
+#   conda env create -f environment.yml
+# Las dependencias de Python viven en pyproject.toml; aquí solo se fija
+# el intérprete, el modelo de spaCy y las variables del ambiente.
+name: causal-coherence
+channels:
+  - defaults
+dependencies:
+  - python=3.12
+  - pip
+  - pip:
+      - -e .
+      - en_core_web_sm @ https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.8.0/en_core_web_sm-3.8.0-py3-none-any.whl
+variables:
+  # Fijo al activar el ambiente: hace determinista el hash de strings
+  # (orden de iteración de sets/dicts de tokens) sin pasos manuales.
+  PYTHONHASHSEED: "0"

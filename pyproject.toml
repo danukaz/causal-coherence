@@ -6,14 +6,37 @@ build-backend = "setuptools.build_meta"
 name = "causal-coherence"
 version = "0.1.0"
 description = "Extracción de narrativas con coherencia causal sobre corpus de noticias (Capstone)."
-requires-python = ">=3.11"
-dependencies = ["numpy", "pandas"]
-
-[project.optional-dependencies]
-# Ambiente rollinglda: preprocesamiento + RollingLDA
-lda = ["spacy", "nltk", "ttta"]
-# Ambiente capstone: Narrative Trails (repo externo, ver README)
-narrative = ["umap-learn", "hdbscan", "networkx", "scikit-learn"]
+# numba 0.60 (fijado abajo) solo tiene soporte hasta Python 3.12.
+requires-python = ">=3.11,<3.13"
+dependencies = [
+    # --- Preprocesamiento + RollingLDA ---
+    "spacy",
+    "nltk",
+    "ttta",
+    "pandas",
+    # --- Narrative Trails: lo que importan Library/narrative_landscape.py,
+    # storyline.py y helper.py del repo externo (ver README) ---
+    "networkx",
+    "altair",
+    "matplotlib",
+    "seaborn",
+    "pillow",
+    # --- Fijados por reproducibilidad, NO por compatibilidad ---
+    # Con versiones más nuevas todo instala sin conflictos, pero la
+    # proyección UMAP (depende de scipy vía la inicialización espectral)
+    # y el clustering de HDBSCAN (hdbscan + scikit-learn) cambian, y con
+    # ellos el hash de la matriz de coherencia de baseline_narrative.py
+    # (referencia: 63d0faab065a6f4c). Estas son las versiones con que se
+    # generaron los resultados de results/. numba 0.60 exige numpy<2.1.
+    "umap-learn==0.5.7",
+    "pynndescent==0.5.13",
+    "numba==0.60.0",
+    "llvmlite==0.43.0",
+    "hdbscan==0.8.40",
+    "scikit-learn==1.6.1",
+    "scipy==1.13.1",
+    "numpy==2.0.2",
+]
 
 [tool.setuptools.packages.find]
 where = ["src"]

@@ -2,9 +2,9 @@
 data_loading.py
 
 Carga y filtrado de los corpus del laboratorio (T17 y Afganistán). Sin
-dependencias de nltk/spacy/ttta a propósito -- este módulo debe poder
-importarse desde cualquier ambiente (capstone o rollinglda) sin
-arrastrar paquetes pesados que no se necesitan solo para cargar datos.
+dependencias de nltk/spacy/ttta/umap a propósito -- este módulo debe
+poder importarse (desde un notebook, por ejemplo) sin arrastrar
+paquetes pesados que no se necesitan solo para cargar datos.
 """
 
 import json

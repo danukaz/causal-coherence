@@ -3,7 +3,6 @@ preprocessing.py
 
 Preprocesamiento de texto en inglés -- el corpus bpoil es en inglés, a
 diferencia del corpus en español del repo t2s2026 de referencia.
-Requiere el ambiente rollinglda (spaCy + NLTK).
 """
 
 import nltk

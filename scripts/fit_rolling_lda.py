@@ -3,7 +3,7 @@ fit_rolling_lda.py  (antes causal_coherence.py)
 
 Semana 3: carga el corpus T17, lo filtra al subset "bpoil" (el caso de
 estudio principal), lo trunca a la ventana de cobertura sostenida y
-ajusta RollingLDA. Ambiente: rollinglda.
+ajusta RollingLDA.
 """
 
 from causal_coherence.data_loading import (
