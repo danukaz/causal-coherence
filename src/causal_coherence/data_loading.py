@@ -111,3 +111,25 @@ def load_subset(source_label: str, dataset_dir: Path):
 def load_bpoil_full():
     """Carga bpoil completo (sin truncar), ordenado cronológicamente."""
     return load_subset(SOURCE_LABEL, T17_DIR)
+
+
+# ---------------------------------------------------------------------------
+# Ventana de análisis
+# ---------------------------------------------------------------------------
+
+# Decisión tomada tras inspeccionar semana a semana: antes del
+# 19-04-2010 el corpus tiene solo 2 documentos en 3 semanas (la explosión de
+# la plataforma fue el 20-04-2010, así que casi no hay cobertura real antes),
+# incluyendo una semana totalmente vacía. RollingLDA debe reajustarse sobre
+# esta misma ventana para que la serie de tópicos sea coherente con el
+# modelo que la genera.
+CORPUS_START = pd.Timestamp("2010-04-19")
+CORPUS_END = pd.Timestamp("2010-09-30")
+
+
+def truncate_to_analysis_window(df: pd.DataFrame) -> pd.DataFrame:
+    mask = (df["date"] >= CORPUS_START) & (df["date"] <= CORPUS_END)
+    descartados = len(df) - mask.sum()
+    print(f"Truncamiento a [{CORPUS_START.date()}, {CORPUS_END.date()}]: "
+          f"se dejan fuera {descartados} de {len(df)} documentos.")
+    return df.loc[mask].reset_index(drop=True)

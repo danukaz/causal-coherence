@@ -2,8 +2,8 @@
 fit_rolling_lda.py  (antes causal_coherence.py)
 
 Semana 3: carga el corpus T17, lo filtra al subset "bpoil" (el caso de
-estudio principal), lo trunca a la ventana de cobertura sostenida y
-ajusta RollingLDA.
+estudio principal), lo trunca a la ventana de análisis y ajusta
+RollingLDA.
 """
 
 from causal_coherence.data_loading import (
@@ -12,6 +12,7 @@ from causal_coherence.data_loading import (
     build_dataframe,
     date_range,
     load_filtered,
+    truncate_to_analysis_window,
 )
 from causal_coherence.preprocessing import (
     build_english_pipeline,
@@ -20,11 +21,9 @@ from causal_coherence.preprocessing import (
 )
 from causal_coherence.topic_model import (
     MODEL_PATH,
-    TRUNCATE_AFTER,
     check_hash_seed,
     chunk_summary,
     fit_topic_model,
-    truncate_to_coverage_window,
 )
 
 
@@ -41,14 +40,7 @@ def main():
     start, end = date_range(docs_bpoil)
     print(f"Documentos en '{TOPIC}': {len(docs_bpoil)} ({start} a {end})")
 
-    df = build_dataframe(docs_bpoil)
-    before = len(df)
-    df = truncate_to_coverage_window(df)
-    dropped = before - len(df)
-    print(
-        f"Truncamiento a {TRUNCATE_AFTER.date()}: se dejan fuera "
-        f"{dropped} de {before} documentos ({dropped / before:.1%})."
-    )
+    df = truncate_to_analysis_window(build_dataframe(docs_bpoil))
 
     print("Preprocesando texto (puede demorar un minuto)...")
     nlp = build_english_pipeline()

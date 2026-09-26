@@ -11,7 +11,12 @@ import pandas as pd
 from ttta.methods.rolling_lda import RollingLDA
 
 from causal_coherence.config import OUTPUT_DIR
-from causal_coherence.data_loading import SOURCE_LABEL, build_dataframe, load_filtered
+from causal_coherence.data_loading import (
+    SOURCE_LABEL,
+    build_dataframe,
+    load_filtered,
+    truncate_to_analysis_window,
+)
 
 MODEL_PATH = OUTPUT_DIR / "roll_lda_bpoil.pickle"
 
@@ -28,8 +33,15 @@ REFERENCE_HASH_SEED = "0"
 # alcance el umbral por mala suerte, no por falta real de vocabulario.
 # Se vuelve a chunks mensuales simples y prototype=100 para verificar
 # si la fusión agresiva era realmente necesaria.
-TRUNCATE_AFTER = pd.Timestamp("2010-09-30")
-
+#
+# La ventana de análisis (inicio y fin del corpus) vive en
+# causal_coherence.data_loading (CORPUS_START/CORPUS_END), no acá --
+# es la misma ventana que usa la construcción de la serie temporal de
+# la semana 5, y no tiene sentido que cada script la trunque distinto.
+# Los cortes de CUSTOM_CHUNKS abajo no necesitan tocarse por el nuevo
+# inicio: mover el inicio de abril-1 a abril-20 solo le quita 108
+# tokens al primer chunk (de 15893 a 15785, ver bitácora) -- no hay
+# vocabulario disperso nuevo que fusionar.
 CUSTOM_CHUNKS = pd.to_datetime([
     "2010-04-30",
     "2010-05-31",
@@ -67,16 +79,6 @@ LDA_CONFIG = {
     "seed": 42,
     "verbose": 1,
 }
-
-
-def truncate_to_coverage_window(df: pd.DataFrame) -> pd.DataFrame:
-    """
-    Recorta el corpus a la ventana de cobertura sostenida (hasta
-    TRUNCATE_AFTER). Ver el comentario junto a esa constante para la
-    justificación completa -- esto no es un descarte silencioso, quien
-    llama debe reportar cuántos documentos se dejan fuera.
-    """
-    return df[df["date"] <= TRUNCATE_AFTER].reset_index(drop=True)
 
 
 def check_hash_seed() -> None:
@@ -139,10 +141,10 @@ def load_topic_model(path=MODEL_PATH) -> RollingLDA:
 def training_documents() -> pd.DataFrame:
     """
     Documentos con que se ajusta el modelo, en el mismo orden que las filas
-    de su matriz documento-tópico: bpoil truncado a TRUNCATE_AFTER y
-    ordenado por fecha con orden estable, que es lo que hace
+    de su matriz documento-tópico: bpoil truncado a la ventana de análisis
+    y ordenado por fecha con orden estable, que es lo que hace
     RollingLDA.fit internamente. El modelo guardado no incluye las fechas.
     """
     docs, _ = load_filtered(SOURCE_LABEL)
-    df = truncate_to_coverage_window(build_dataframe(docs))
+    df = truncate_to_analysis_window(build_dataframe(docs))
     return df.sort_values("date", kind="stable").reset_index(drop=True)

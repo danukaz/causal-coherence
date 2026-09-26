@@ -10,7 +10,12 @@ Reutiliza las funciones del paquete causal_coherence -- no las reescribe.
 
 import pandas as pd
 
-from causal_coherence.data_loading import SOURCE_LABEL, build_dataframe, load_filtered
+from causal_coherence.data_loading import (
+    SOURCE_LABEL,
+    build_dataframe,
+    load_filtered,
+    truncate_to_analysis_window,
+)
 from causal_coherence.preprocessing import (
     build_english_pipeline,
     get_english_stopwords,
@@ -67,6 +72,7 @@ def cumulative_ttr_chunks(df, ttr_threshold: float):
 def main():
     docs_bpoil, _ = load_filtered(SOURCE_LABEL)
     df = build_dataframe(docs_bpoil)
+    df = truncate_to_analysis_window(df)
 
     print("Preprocesando texto...")
     nlp = build_english_pipeline()

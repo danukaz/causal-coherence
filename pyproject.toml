@@ -21,6 +21,8 @@ dependencies = [
     "matplotlib",
     "seaborn",
     "pillow",
+    # --- Series temporales (semana 5): ADF y KPSS en check_stationarity.py ---
+    "statsmodels==0.15.0",  # fijada para que data/stationarity_results.csv sea repetible
     # --- Fijados por reproducibilidad, no por compatibilidad ---
     # Con versiones más nuevas todo instala sin conflictos, pero cambia el
     # hash de baseline_narrative.py (referencia 63d0faab065a6f4c).
