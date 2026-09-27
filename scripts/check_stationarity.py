@@ -2,8 +2,9 @@
 check_stationarity.py
 
 Semana 5: pruebas de estacionariedad sobre las 4 versiones de la serie de
-tópicos (original, diferenciada, detendenciada, residualizada), para cada
-una de sus 9 columnas:
+tópicos en representación de volumen (original, diferenciada,
+detendenciada, residualizada), para cada una de sus 10 columnas. Las
+series de control de volumen no se prueban:
 
   - ADF (statsmodels.tsa.stattools.adfuller), regression="c".
     Nula: hay raíz unitaria (no estacionaria).
@@ -25,10 +26,10 @@ from statsmodels.tsa.stattools import adfuller, kpss
 from causal_coherence.config import OUTPUT_DIR
 
 SERIES = {
-    "original": "topic_series_log_ratio.csv",
-    "diferenciada": "topic_series_diferenciada.csv",
-    "detendenciada": "topic_series_detendenciada.csv",
-    "residualizada": "topic_series_residualizada.csv",
+    "original": "topic_series_volumen.csv",
+    "diferenciada": "topic_series_volumen_diferenciada.csv",
+    "detendenciada": "topic_series_volumen_detendenciada.csv",
+    "residualizada": "topic_series_volumen_residualizada.csv",
 }
 OUTPUT_PATH = OUTPUT_DIR / "stationarity_results.csv"
 

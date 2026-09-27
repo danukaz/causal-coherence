@@ -126,6 +126,12 @@ def load_bpoil_full():
 CORPUS_START = pd.Timestamp("2010-04-19")
 CORPUS_END = pd.Timestamp("2010-09-30")
 
+# Mínimo de documentos por ventana de la serie temporal (R1 de la guía: las
+# ventanas que no alcanzan un mínimo declarado se excluyen, además de las de
+# borde incompletas). Con la grilla semanal actual la ventana más chica tiene
+# 7 documentos, así que este mínimo no excluye ninguna.
+MIN_DOCS_PER_WINDOW = 5
+
 
 def truncate_to_analysis_window(df: pd.DataFrame) -> pd.DataFrame:
     mask = (df["date"] >= CORPUS_START) & (df["date"] <= CORPUS_END)
@@ -133,3 +139,18 @@ def truncate_to_analysis_window(df: pd.DataFrame) -> pd.DataFrame:
     print(f"Truncamiento a [{CORPUS_START.date()}, {CORPUS_END.date()}]: "
           f"se dejan fuera {descartados} de {len(df)} documentos.")
     return df.loc[mask].reset_index(drop=True)
+
+
+def drop_windows_below_min_docs(windows: pd.DataFrame, n_docs: pd.Series):
+    """
+    Descarta las ventanas con menos de MIN_DOCS_PER_WINDOW documentos.
+    windows y n_docs están indexados por la misma fecha de ventana.
+    Devuelve (windows, n_docs) filtrados.
+    """
+    keep = n_docs >= MIN_DOCS_PER_WINDOW
+    for fecha in n_docs.index[~keep]:
+        print(f"  Se descarta la ventana que cierra {fecha.date()} ({n_docs[fecha]} documentos, "
+              f"mínimo {MIN_DOCS_PER_WINDOW}).")
+    print(f"{int((~keep).sum())} ventanas excluidas por mínimo de documentos "
+          f"(MIN_DOCS_PER_WINDOW = {MIN_DOCS_PER_WINDOW}).")
+    return windows.loc[keep], n_docs.loc[keep]
