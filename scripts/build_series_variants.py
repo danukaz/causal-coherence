@@ -49,9 +49,12 @@ OUTPUTS = {
 # dimensiones (el residuo es ortogonal a esa componente), así que las K
 # columnas son exactamente colineales y la autorregresión sería singular
 # (guía, ecuación 6). El PCA se calcula igual sobre las K columnas; solo se
-# descarta una al escribir el CSV. Cuál no importa matemáticamente: se usa
-# topic_3 por continuidad con el resto de la documentación.
-RESIDUALIZED_DROP_COLUMN = "topic_3"
+# descarta una al escribir el CSV. Cuál no importa matemáticamente; se elige
+# topic_5 (percent, reuters, comment, ultra, compliance...), que es texto de
+# plantilla sin contenido narrativo, para no perder en la residualizada los
+# pares de un tópico sustantivo. Los 18 pares ordenados que involucran a
+# topic_5 solo se evalúan en las otras 3 versiones.
+RESIDUALIZED_DROP_COLUMN = "topic_5"
 
 CONTROL_OUTPUTS = {
     "diferenciado": OUTPUT_DIR / "control_volumen_diferenciado.csv",
