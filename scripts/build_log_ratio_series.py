@@ -18,6 +18,7 @@ son un paso aparte.
 
 import numpy as np
 import pandas as pd
+from ttta.methods.rolling_lda import RollingLDA
 
 from causal_coherence.config import OUTPUT_DIR
 from causal_coherence.data_loading import CORPUS_END, CORPUS_START
@@ -27,7 +28,7 @@ REFERENCE_TOPIC = 3
 OUTPUT_PATH = OUTPUT_DIR / "topic_series_log_ratio.csv"
 
 
-def get_theta(roll) -> np.ndarray:
+def get_theta(roll: RollingLDA) -> np.ndarray:
     """theta normalizada por fila (cada documento suma 1)."""
     theta_raw = roll.get_document_topic_matrix()
     row_sums = theta_raw.sum(axis=1, keepdims=True)
@@ -67,7 +68,7 @@ def log_ratio(weekly: pd.DataFrame, reference: int) -> pd.DataFrame:
     return pd.DataFrame(ratios, index=weekly.index)
 
 
-def main():
+def main() -> None:
     roll = load_topic_model()
     df = training_documents()
     theta = get_theta(roll)

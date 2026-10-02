@@ -12,7 +12,7 @@ No necesita theta ni RollingLDA -- solo las fechas del corpus.
 from causal_coherence.data_loading import load_bpoil_full, truncate_to_analysis_window
 
 
-def main():
+def main() -> None:
     df, _ = load_bpoil_full()
     df = truncate_to_analysis_window(df)
     print(f"Corpus: {len(df)} documentos, {df['date'].min().date()} a {df['date'].max().date()}")

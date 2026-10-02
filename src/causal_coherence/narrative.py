@@ -76,13 +76,13 @@ _UNCACHED_ATTRS = ("ang_sim", "topic_sim", "mst")
 # Construcción y caché del landscape
 # ---------------------------------------------------------------------------
 
-def build_landscape(embeddings: np.ndarray, dates) -> NarrativeLandscape:
+def build_landscape(embeddings: np.ndarray, dates: np.ndarray) -> NarrativeLandscape:
     landscape = NarrativeLandscape(**LANDSCAPE_PARAMS, verbose=True)
     landscape.fit(embeddings, dates=dates)
     return landscape
 
 
-def count_topics(cluster_labels) -> int:
+def count_topics(cluster_labels: np.ndarray) -> int:
     """Número de tópicos descubiertos por HDBSCAN, sin contar el ruido (-1)."""
     labels = set(cluster_labels)
     return len(labels) - (1 if -1 in labels else 0)
@@ -93,7 +93,7 @@ def matrix_hash(matrix: np.ndarray) -> str:
     return hashlib.sha256(np.ascontiguousarray(matrix).tobytes()).hexdigest()[:16]
 
 
-def landscape_cache_key(embeddings: np.ndarray, dates) -> str:
+def landscape_cache_key(embeddings: np.ndarray, dates: pd.Series | np.ndarray) -> str:
     """
     Clave derivada de todo lo que determina el landscape: embeddings,
     fechas, parámetros y versiones de las librerías que lo afectan.
@@ -107,7 +107,9 @@ def landscape_cache_key(embeddings: np.ndarray, dates) -> str:
     return h.hexdigest()[:16]
 
 
-def load_or_build_landscape(embeddings: np.ndarray, dates, cache_dir: Path = None):
+def load_or_build_landscape(
+    embeddings: np.ndarray, dates: pd.Series | np.ndarray, cache_dir: Path | None = None
+) -> tuple[NarrativeLandscape, str]:
     """
     Devuelve (landscape, coherence_hash). Si ya existe un landscape
     ajustado con las mismas entradas, lo carga desde cache_dir en vez de
@@ -139,7 +141,7 @@ def load_or_build_landscape(embeddings: np.ndarray, dates, cache_dir: Path = Non
 # Extracción de narrativas
 # ---------------------------------------------------------------------------
 
-def extract_alternatives(landscape: NarrativeLandscape, src: int, tgt: int, n_paths: int = 3):
+def extract_alternatives(landscape: NarrativeLandscape, src: int, tgt: int, n_paths: int = 3) -> list[Storyline]:
     """
     Hasta n_paths narrativas entre el mismo par de extremos, excluyendo en
     cada vuelta los nodos intermedios ya usados por las anteriores (el
@@ -158,7 +160,7 @@ def extract_alternatives(landscape: NarrativeLandscape, src: int, tgt: int, n_pa
     return storylines
 
 
-def narrative_table(df: pd.DataFrame, landscape: NarrativeLandscape, chain, lead_chars: int = 0) -> pd.DataFrame:
+def narrative_table(df: pd.DataFrame, landscape: NarrativeLandscape, chain: list[int], lead_chars: int = 0) -> pd.DataFrame:
     """
     Un documento por fila, en el orden del camino: fecha, tópico, coherencia
     base con el documento anterior y título completo. Con lead_chars > 0
@@ -177,7 +179,7 @@ def narrative_table(df: pd.DataFrame, landscape: NarrativeLandscape, chain, lead
     return table
 
 
-def alternatives_summary(storylines) -> pd.DataFrame:
+def alternatives_summary(storylines: list[Storyline]) -> pd.DataFrame:
     """Largo, bottleneck y reliability de cada narrativa alternativa."""
     return pd.DataFrame([
         {"largo": len(s.chain), "bottleneck": s.bottleneck_weight(), "reliability": s.reliability()}
@@ -185,7 +187,7 @@ def alternatives_summary(storylines) -> pd.DataFrame:
     ]).rename_axis("alternativa")
 
 
-def print_alternatives(df: pd.DataFrame, landscape: NarrativeLandscape, storylines, lead_chars: int = 0) -> None:
+def print_alternatives(df: pd.DataFrame, landscape: NarrativeLandscape, storylines: list[Storyline], lead_chars: int = 0) -> None:
     """Imprime cada narrativa alternativa documento por documento (ver narrative_table)."""
     for i, storyline in enumerate(storylines):
         print(f"--- Alternativa {i}: {len(storyline.chain)} documentos · "

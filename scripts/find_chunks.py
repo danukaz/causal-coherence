@@ -23,7 +23,7 @@ from causal_coherence.preprocessing import (
 )
 
 
-def cumulative_ttr_chunks(df, ttr_threshold: float):
+def cumulative_ttr_chunks(df: pd.DataFrame, ttr_threshold: float) -> list[pd.Timestamp]:
     """
     Acumula documentos mes a mes y cierra un chunk apenas la razón
     tipo-token de la ventana acumulada (desde el último corte) cae por
@@ -69,7 +69,7 @@ def cumulative_ttr_chunks(df, ttr_threshold: float):
     return cuts
 
 
-def main():
+def main() -> None:
     docs_bpoil, _ = load_filtered(SOURCE_LABEL)
     df = build_dataframe(docs_bpoil)
     df = truncate_to_analysis_window(df)

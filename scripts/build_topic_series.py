@@ -14,18 +14,19 @@ no el cálculo final.
 
 import numpy as np
 import pandas as pd
+from ttta.methods.rolling_lda import RollingLDA
 
 from causal_coherence.topic_model import load_topic_model, training_documents
 
 
-def get_theta(roll) -> np.ndarray:
+def get_theta(roll: RollingLDA) -> np.ndarray:
     """theta normalizada por fila (cada documento suma 1)."""
     theta_raw = roll.get_document_topic_matrix()
     row_sums = theta_raw.sum(axis=1, keepdims=True)
     return theta_raw / row_sums
 
 
-def main():
+def main() -> None:
     roll = load_topic_model()
     df = training_documents()
 

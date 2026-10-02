@@ -23,6 +23,7 @@ from causal_coherence.config import OUTPUT_DIR, PROJECT_ROOT
 from causal_coherence.data_loading import documents_between, load_bpoil_full
 from causal_coherence.narrative import (
     CONFIG,
+    NarrativeLandscape,
     Storyline,
     build_landscape,
     count_topics,
@@ -70,12 +71,12 @@ TGT_NODE = 572
 N_PATHS = 3
 
 
-def show_candidates(df: pd.DataFrame, start: str, end: str, n: int = 10):
+def show_candidates(df: pd.DataFrame, start: str, end: str, n: int = 10) -> None:
     """Muestra documentos en una ventana de fechas, para elegir origen/destino con criterio."""
     print(documents_between(df, start, end).head(n).to_string())
 
 
-def print_degree_check(landscape, src: int, tgt: int) -> None:
+def print_degree_check(landscape: NarrativeLandscape, src: int, tgt: int) -> None:
     """Grado total de los extremos frente al resto del grafo; avisa si alguno es periférico."""
     print("\nGrado de los extremos (aristas entrantes + salientes):")
     for role, node in (("Origen ", src), ("Destino", tgt)):
@@ -85,7 +86,7 @@ def print_degree_check(landscape, src: int, tgt: int) -> None:
               f"promedio {r['mean_degree']:.0f}, percentil {r['percentile']:.2f}){note}")
 
 
-def parse_pair(argv) -> tuple[int, int]:
+def parse_pair(argv: list[str]) -> tuple[int, int]:
     if len(argv) == 1:
         return SRC_NODE, TGT_NODE
     if len(argv) == 3:
@@ -93,7 +94,7 @@ def parse_pair(argv) -> tuple[int, int]:
     raise SystemExit("uso: python scripts/baseline_narrative.py [ORIGEN DESTINO]")
 
 
-def main():
+def main() -> None:
     src, tgt = parse_pair(sys.argv)
     df, embeddings = load_bpoil_full()
 

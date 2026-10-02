@@ -23,7 +23,7 @@ SEMANA_FIN = "2010-05-02"     # la misma fecha, porque resample("W")
 TOPICO = 5
 
 
-def main():
+def main() -> None:
     roll = load_topic_model()
     df = training_documents()
 

@@ -6,6 +6,7 @@ Configuración y ajuste de RollingLDA sobre bpoil.
 
 import os
 import warnings
+from pathlib import Path
 
 import pandas as pd
 from ttta.methods.rolling_lda import RollingLDA
@@ -131,7 +132,7 @@ def chunk_summary(roll: RollingLDA, df: pd.DataFrame) -> pd.DataFrame:
     return pd.DataFrame(rows).rename_axis("chunk")
 
 
-def load_topic_model(path=MODEL_PATH) -> RollingLDA:
+def load_topic_model(path: Path | str = MODEL_PATH) -> RollingLDA:
     """Carga un modelo ya ajustado (por defecto el que guarda fit_rolling_lda.py)."""
     roll = RollingLDA(**LDA_CONFIG)
     roll.load(str(path))

@@ -54,7 +54,7 @@ def load_embeddings(dataset_dir: Path = T17_DIR) -> np.ndarray:
 # Filtrado y alineación con los embeddings
 # ---------------------------------------------------------------------------
 
-def filter_topic(docs: list[dict], embeddings: np.ndarray, source_label: str):
+def filter_topic(docs: list[dict], embeddings: np.ndarray, source_label: str) -> tuple[list[dict], np.ndarray]:
     assert embeddings.shape[0] == len(docs), (
         f"Los embeddings tienen {embeddings.shape[0]} filas pero el corpus "
         f"completo tiene {len(docs)} documentos -- no se puede asumir que "
@@ -67,7 +67,7 @@ def filter_topic(docs: list[dict], embeddings: np.ndarray, source_label: str):
     return filtered_docs, filtered_embeddings
 
 
-def date_range(docs: list[dict]):
+def date_range(docs: list[dict]) -> tuple[str, str]:
     dates = sorted(doc["date"] for doc in docs)
     return dates[0], dates[-1]
 
@@ -84,7 +84,7 @@ def documents_between(df: pd.DataFrame, start: str, end: str) -> pd.DataFrame:
     return df.loc[mask, ["date", "title"]]
 
 
-def sort_by_date(df: pd.DataFrame, embeddings: np.ndarray):
+def sort_by_date(df: pd.DataFrame, embeddings: np.ndarray) -> tuple[pd.DataFrame, np.ndarray]:
     """Ordena documentos y embeddings juntos por fecha, preservando la alineación."""
     order = df["date"].argsort(kind="stable").to_numpy()
     return df.iloc[order].reset_index(drop=True), embeddings[order]
@@ -94,21 +94,21 @@ def sort_by_date(df: pd.DataFrame, embeddings: np.ndarray):
 # Atajos de alto nivel
 # ---------------------------------------------------------------------------
 
-def load_filtered(source_label: str = SOURCE_LABEL, dataset_dir: Path = T17_DIR):
+def load_filtered(source_label: str = SOURCE_LABEL, dataset_dir: Path = T17_DIR) -> tuple[list[dict], np.ndarray]:
     """Documentos (en el orden original del corpus) y embeddings de un subset."""
     docs = load_full_corpus(dataset_dir)
     embeddings = load_embeddings(dataset_dir)
     return filter_topic(docs, embeddings, source_label)
 
 
-def load_subset(source_label: str, dataset_dir: Path):
+def load_subset(source_label: str, dataset_dir: Path) -> tuple[pd.DataFrame, np.ndarray]:
     """Carga un subset completo (sin truncar) como DataFrame, ordenado cronológicamente."""
     docs, embeddings = load_filtered(source_label, dataset_dir)
     df = build_dataframe(docs)
     return sort_by_date(df, embeddings)
 
 
-def load_bpoil_full():
+def load_bpoil_full() -> tuple[pd.DataFrame, np.ndarray]:
     """Carga bpoil completo (sin truncar), ordenado cronológicamente."""
     return load_subset(SOURCE_LABEL, T17_DIR)
 
@@ -141,7 +141,7 @@ def truncate_to_analysis_window(df: pd.DataFrame) -> pd.DataFrame:
     return df.loc[mask].reset_index(drop=True)
 
 
-def drop_windows_below_min_docs(windows: pd.DataFrame, n_docs: pd.Series):
+def drop_windows_below_min_docs(windows: pd.DataFrame, n_docs: pd.Series) -> tuple[pd.DataFrame, pd.Series]:
     """
     Descarta las ventanas con menos de MIN_DOCS_PER_WINDOW documentos.
     windows y n_docs están indexados por la misma fecha de ventana.

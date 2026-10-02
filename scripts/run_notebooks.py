@@ -49,7 +49,7 @@ def run(path: Path) -> None:
     nbformat.write(nb, path)
 
 
-def main():
+def main() -> None:
     names = sys.argv[1:] or sorted(p.stem for p in EXAMPLES_DIR.glob("*.ipynb"))
     for name in names:
         path = EXAMPLES_DIR / f"{Path(name).stem}.ipynb"

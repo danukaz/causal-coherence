@@ -19,12 +19,12 @@ def build_english_pipeline() -> spacy.Language:
     return spacy.load("en_core_web_sm")
 
 
-def get_english_stopwords() -> set:
+def get_english_stopwords() -> set[str]:
     nltk.download("stopwords", quiet=True)
     return set(stopwords.words("english"))
 
 
-def preprocess_batch(texts, pipeline, extra_stopwords) -> list[list[str]]:
+def preprocess_batch(texts: list[str], pipeline: spacy.Language, extra_stopwords: set[str]) -> list[list[str]]:
     """
     Tokeniza, lematiza y limpia una lista de textos.
     Se descartan signos de puntuación, números, y stopwords.

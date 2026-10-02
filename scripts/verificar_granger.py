@@ -23,14 +23,14 @@ ORIGEN = "topic_3"
 DESTINO = "topic_8"
 
 
-def cargar_datos():
+def cargar_datos() -> tuple[pd.DataFrame, pd.Series]:
     series = pd.read_csv(OUTPUT_DIR / "topic_series_volumen.csv", index_col=0, parse_dates=True)
     control = pd.read_csv(OUTPUT_DIR / "control_volumen.csv", index_col=0, parse_dates=True)
     assert (series.index == control.index).all(), "Las fechas de series y control no calzan"
     return series, control["control_volumen"]
 
 
-def armar_diseno(series: pd.DataFrame, control: pd.Series, excluir: str | None):
+def armar_diseno(series: pd.DataFrame, control: pd.Series, excluir: str | None) -> tuple[np.ndarray, np.ndarray, list[str]]:
     """
     Arma la matriz de diseño para p=1: predictores = valores rezagados
     (t-1) de todos los tópicos (menos 'excluir', si se da) + el control
@@ -49,7 +49,7 @@ def armar_diseno(series: pd.DataFrame, control: pd.Series, excluir: str | None):
     return X, y, topicos
 
 
-def ajustar(X, y):
+def ajustar(X: np.ndarray, y: np.ndarray) -> tuple[float, int]:
     """OLS por mínimos cuadrados; devuelve RSS y cantidad de parámetros."""
     coef, residuals, rank, _ = np.linalg.lstsq(X, y, rcond=None)
     y_hat = X @ coef
@@ -57,7 +57,7 @@ def ajustar(X, y):
     return rss, X.shape[1]  # RSS, cantidad de parámetros (incluye intercepto)
 
 
-def main():
+def main() -> None:
     series, control = cargar_datos()
     T = len(series)
     print(f"T (ventanas totales en la serie): {T}")

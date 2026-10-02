@@ -17,6 +17,7 @@ sistema, según exige la guía.
 
 import numpy as np
 import pandas as pd
+from ttta.methods.rolling_lda import RollingLDA
 
 from causal_coherence.config import OUTPUT_DIR
 from causal_coherence.data_loading import CORPUS_END, CORPUS_START, drop_windows_below_min_docs
@@ -26,7 +27,7 @@ TOPIC_SERIES_PATH = OUTPUT_DIR / "topic_series_volumen.csv"
 CONTROL_SERIES_PATH = OUTPUT_DIR / "control_volumen.csv"
 
 
-def get_theta(roll) -> np.ndarray:
+def get_theta(roll: RollingLDA) -> np.ndarray:
     """theta normalizada por fila (cada documento suma 1)."""
     theta_raw = roll.get_document_topic_matrix()
     row_sums = theta_raw.sum(axis=1, keepdims=True)
@@ -44,7 +45,7 @@ def drop_incomplete_edge_windows(weekly: pd.DataFrame) -> pd.DataFrame:
     return weekly.loc[completa]
 
 
-def main():
+def main() -> None:
     roll = load_topic_model()
     df = training_documents()
     theta = get_theta(roll)

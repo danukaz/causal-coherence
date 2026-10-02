@@ -29,14 +29,14 @@ VERSIONES = {
 }
 
 
-def cargar(nombre_serie, nombre_control):
+def cargar(nombre_serie: str, nombre_control: str) -> tuple[pd.DataFrame, pd.Series]:
     series = pd.read_csv(OUTPUT_DIR / nombre_serie, index_col=0, parse_dates=True)
     control = pd.read_csv(OUTPUT_DIR / nombre_control, index_col=0, parse_dates=True).iloc[:, 0]
     assert (series.index == control.index).all()
     return series, control
 
 
-def control_propio(nombre_serie_original="topic_series_volumen.csv"):
+def control_propio(nombre_serie_original: str = "topic_series_volumen.csv") -> tuple[pd.DataFrame, pd.Series]:
     """
     Reconstruye, para el control 'propio', la masa cruda de cada
     tópico (deshaciendo el log1p ya aplicado) y el n_t total, para
@@ -48,7 +48,7 @@ def control_propio(nombre_serie_original="topic_series_volumen.csv"):
     return masa_cruda, n_t
 
 
-def armar_diseno(series, control_series, excluir):
+def armar_diseno(series: pd.DataFrame, control_series: pd.Series, excluir: str | None) -> tuple[np.ndarray, np.ndarray]:
     topicos = [c for c in series.columns if c != excluir]
     n = len(series)
     X_rezagado = series[topicos].iloc[:-1].to_numpy()
@@ -59,13 +59,13 @@ def armar_diseno(series, control_series, excluir):
     return X, y
 
 
-def ajustar(X, y):
+def ajustar(X: np.ndarray, y: np.ndarray) -> tuple[float, int]:
     coef, *_ = np.linalg.lstsq(X, y, rcond=None)
     rss = np.sum((y - X @ coef) ** 2)
     return rss, X.shape[1]
 
 
-def probar(series, control_series, etiqueta):
+def probar(series: pd.DataFrame, control_series: pd.Series, etiqueta: str) -> None:
     X_f, y_f = armar_diseno(series, control_series, excluir=None)
     rss_f, params_f = ajustar(X_f, y_f)
     X_r, y_r = armar_diseno(series, control_series, excluir=ORIGEN)
@@ -81,7 +81,7 @@ def probar(series, control_series, etiqueta):
           f"gl=({df_num},{df_den})")
 
 
-def main():
+def main() -> None:
     print(f"Par verificado: {ORIGEN} -> {DESTINO}, p={P}\n")
 
     print("=== Control COMPARTIDO (log(1+n_t), igual para las 10 ecuaciones) ===")

@@ -25,7 +25,7 @@ SRC_NODE = 15
 TGT_NODE = 727
 
 
-def main():
+def main() -> None:
     df, embeddings = load_subset(SOURCE_LABEL, AFGHANISTAN_DIR)
     print(f"Documentos ({SOURCE_LABEL}): {len(df)}")
     print(f"Rango de fechas: {df['date'].min().date()} a {df['date'].max().date()}")

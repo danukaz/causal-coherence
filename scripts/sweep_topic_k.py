@@ -84,7 +84,7 @@ def fit(k: int) -> None:
     print(f"K={k}: ajuste en {seconds / 60:.1f} min, modelo guardado en {path.name}")
 
 
-def volume_series(roll, df):
+def volume_series(roll: RollingLDA, df: pd.DataFrame) -> tuple[pd.DataFrame, pd.Series]:
     """Mismos pasos que build_volumen_series.main."""
     theta = get_theta(roll)
     theta_df = pd.DataFrame(theta, columns=[f"topic_{k}" for k in range(theta.shape[1])])

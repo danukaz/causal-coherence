@@ -6,6 +6,9 @@ estudio principal), lo trunca a la ventana de análisis y ajusta
 RollingLDA.
 """
 
+import pandas as pd
+from ttta.methods.rolling_lda import RollingLDA
+
 from causal_coherence.data_loading import (
     SOURCE_LABEL,
     TOPIC,
@@ -27,14 +30,14 @@ from causal_coherence.topic_model import (
 )
 
 
-def print_chunk_summary(roll, df) -> None:
+def print_chunk_summary(roll: RollingLDA, df: pd.DataFrame) -> None:
     """Imprime cuántos documentos tiene cada chunk y su rango de fechas real."""
     print("\nResumen real de chunks:")
     for i, row in chunk_summary(roll, df).iterrows():
         print(f"  Chunk {i}: {row['documentos']} documentos, de {row['desde']} a {row['hasta']}")
 
 
-def main():
+def main() -> None:
     check_hash_seed()
     docs_bpoil, _ = load_filtered(SOURCE_LABEL)
     start, end = date_range(docs_bpoil)

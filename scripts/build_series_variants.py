@@ -87,7 +87,7 @@ def build_detrended(series: pd.DataFrame) -> pd.DataFrame:
     return detrended
 
 
-def build_residualized(series: pd.DataFrame):
+def build_residualized(series: pd.DataFrame) -> tuple[pd.DataFrame, np.ndarray]:
     """
     PCA sobre las series estandarizadas. Devuelve (residualizada,
     varianza_explicada) para poder revisar el supuesto antes de usarla.
@@ -111,7 +111,7 @@ def build_residualized(series: pd.DataFrame):
     return residualizada, varianza_explicada
 
 
-def main():
+def main() -> None:
     original = load_original_series()
     control = load_control()
     print(f"Serie original cargada: {original.shape[0]} ventanas x {original.shape[1]} series")

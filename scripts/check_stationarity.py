@@ -51,7 +51,7 @@ def test_column(x: pd.Series) -> dict:
     }
 
 
-def main():
+def main() -> None:
     rows = []
     for version, filename in SERIES.items():
         series = pd.read_csv(OUTPUT_DIR / filename, index_col=0, parse_dates=True)

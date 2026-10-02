@@ -39,7 +39,7 @@ LINE_COLORS = ["#1f4e79", "#7f7f7f", "#b9772f"]
 plt.rcParams.update({"font.size": 10, "axes.spines.top": False, "axes.spines.right": False})
 
 
-def classify(row) -> str:
+def classify(row: pd.Series) -> str:
     adf_rejects = row["adf_pvalue"] < ALPHA
     kpss_rejects = row["kpss_pvalue"] < ALPHA
     if adf_rejects and not kpss_rejects:
@@ -131,7 +131,7 @@ def fig_estacionariedad(r: pd.DataFrame) -> None:
     plt.close(fig)
 
 
-def main():
+def main() -> None:
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     r = stationarity_table()
     counts = pd.crosstab(pd.Categorical(r["serie"], VERSIONS), pd.Categorical(r["clase"], CLASSES), dropna=False)
