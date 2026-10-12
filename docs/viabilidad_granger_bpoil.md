@@ -123,6 +123,8 @@ V0: análisis original; V1: sin control de volumen; V2: sin piso en 0 en la seri
 | V3 | rem | 0.120 | 8 | 18 | no |
 | V3 | teo | 0.510 | 18 | 18 | sí |
 
+V3 con la ruta teórica cumple el criterio fijado, pero es un caso límite y no un procedimiento aplicable: no incluye el control de volumen que exige la guía y usa el p teórico, que supone residuos que las series no tienen.
+
 ## 7. Auditoría independiente
 
 | Prueba | Qué verifica | Resultado |
@@ -135,6 +137,8 @@ V0: análisis original; V1: sin control de volumen; V2: sin piso en 0 en la seri
 | A5 (b) | tamaño del test, ruta F, conjunto (fracción con p <= 0.05: 0.0705; remuestreo: 0.0490) | FALLA |
 | A6 (i) | la detección no decrece al aumentar T ni el efecto | PASA |
 | A6 (ii) | a T = 92, detección >= 0.80 para efectos 0.8 y 1.6 | PASA |
+
+A5 falla en la ruta F por una propiedad conocida del F de un VAR con pocas observaciones, que rechaza de más; el remuestreo, que es el método de la guía, queda en 4.9% a nivel 5%.
 
 Detección del par plantado (topic_0 -> topic_1) por Benjamini y Hochberg con la ruta de remuestreo en el banco de respuesta conocida (VAR gaussiano con la dinámica de bpoil, sin piso ni control):
 

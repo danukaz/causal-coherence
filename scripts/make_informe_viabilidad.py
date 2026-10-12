@@ -287,6 +287,9 @@ def main() -> None:
                       "sí" if r.recupera_poder_valido else "no"])
     partes.append(tabla_md(["Variante", "Ruta", "Detección a efecto 1.6 (regla)", "Falsos positivos a efecto 0.0 (máximo)",
                             "Umbral", "Recupera poder válido"], filas) + "\n")
+    partes.append("V3 con la ruta teórica cumple el criterio fijado, pero es un caso límite y no un procedimiento "
+                  "aplicable: no incluye el control de volumen que exige la guía y usa el p teórico, que supone "
+                  "residuos que las series no tienen.\n")
 
     partes.append("## 7. Auditoría independiente\n")
     ok_a1 = resultado_a1()
@@ -319,6 +322,10 @@ def main() -> None:
         ["A6 (i)", "la detección no decrece al aumentar T ni el efecto", marca[ok_a6_i]],
         ["A6 (ii)", "a T = 92, detección >= 0.80 para efectos 0.8 y 1.6", marca[ok_a6_ii]],
     ]) + "\n")
+    frac_rem = cifra("frac_rem: A5 fracción p_rem <= 0.05 (%)", fila_r["frac_p<=0.05"],
+                     "data/auditoria/A5_fracciones.csv", 1, True)
+    partes.append("A5 falla en la ruta F por una propiedad conocida del F de un VAR con pocas observaciones, que "
+                  f"rechaza de más; el remuestreo, que es el método de la guía, queda en {frac_rem}% a nivel 5%.\n")
     partes.append("Detección del par plantado (topic_0 -> topic_1) por Benjamini y Hochberg con la ruta de remuestreo "
                   "en el banco de respuesta conocida (VAR gaussiano con la dinámica de bpoil, sin piso ni control):\n")
     filas = [[cifra(f"A6 K fila {r.K} {r.T} {r.efecto}", r.K, A6), cifra(f"A6 T fila {r.K} {r.T} {r.efecto}", r.T, A6),
