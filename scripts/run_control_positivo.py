@@ -12,6 +12,12 @@ destino)) en todos los pares; Benjamini y Hochberg a q = 0.05 dentro de la
 versión (m = 90, 90, 90 y 72) y regla de al menos 2 versiones para el par
 plantado.
 
+Si algún diseño de una versión no tiene rango completo, la versión se
+registra como no estimable (columna no_estimable_<versión>), sin p ni
+rechazos, y el par plantado cuenta como no detectado en ella. La réplica no
+se excluye ni se reemplaza (Bitacora_Semana7.md, sección 6, nota de las
+22:50).
+
 Salidas en data/control_positivo/:
   betas.csv                  beta calibrado por tamaño y par
   control_positivo.csv       una fila por réplica; se reescribe cada 50
@@ -80,8 +86,20 @@ def procesar_replica(efecto: str, indice: int, real: pd.DataFrame, betas: pd.Dat
     fila: dict[str, object] = {"efecto": efecto, "indice": indice, "origen": plantado_A,
                                "destino": plantado_B, "beta": beta, "celdas_piso": corregidas}
     n_versiones = 0
+    no_estimable: dict[str, int] = {}
     for version, (serie, _, propio) in versiones.items():
         assert list(itertools.permutations(serie.columns, 2)) == pares[version], f"{version}: pares distintos"
+        # Versión no estimable si algún diseño no tiene rango completo: sin p y
+        # sin rechazos; el par plantado cuenta como no detectado.
+        no_estimable[version] = int(any(
+            np.linalg.matrix_rank(X) < X.shape[1]
+            for X, _ in (granger.armar_diseno(serie, propio[d], d, excluir=None) for _, d in pares[version])))
+        if no_estimable[version]:
+            fila[f"rechaza_plantado_{version}"] = 0
+            fila[f"efecto_plantado_{version}"] = np.nan
+            fila[f"p_plantado_{version}"] = np.nan
+            fila[f"rechazos_no_plantados_{version}"] = 0
+            continue
         p = np.empty(len(pares[version]))
         efecto_plantado = np.nan
         for j, (origen, destino) in enumerate(pares[version]):
@@ -89,8 +107,6 @@ def procesar_replica(efecto: str, indice: int, real: pd.DataFrame, betas: pd.Dat
             obs = granger.estadistico_f(serie, control, origen, destino)
             X_f, y = granger.armar_diseno(serie, control, destino, excluir=None)
             X_r, _ = granger.armar_diseno(serie, control, destino, excluir=origen)
-            assert np.linalg.matrix_rank(X_f) == X_f.shape[1], \
-                f"{efecto} {indice} {version} {origen}->{destino}: diseño sin rango completo"
             rng = granger.generador("plantado_remuestreo", efecto, indice, version, origen, destino)
             p[j] = granger.remuestreo_salvaje(X_f, X_r, y, obs["F"], obs["df_num"], obs["df_den"],
                                               B, rng)["p"]
@@ -106,6 +122,8 @@ def procesar_replica(efecto: str, indice: int, real: pd.DataFrame, betas: pd.Dat
         fila[f"rechazos_no_plantados_{version}"] = int(rechazos.sum()) - rechaza
     fila["n_versiones_plantado"] = n_versiones
     fila["detectado_regla"] = int(n_versiones >= MIN_VERSIONES)
+    for version in surrogates.VERSIONES:
+        fila[f"no_estimable_{version}"] = no_estimable[version]
     return fila
 
 
@@ -119,6 +137,11 @@ def cargar_avance() -> list[dict[str, object]]:
     tabla = leer_csv(RUTA_REPLICAS)
     hechas = list(zip(tabla["efecto"], tabla["indice"]))
     assert hechas == secuencia()[:len(hechas)], "el avance guardado no sigue la secuencia esperada"
+    # Las réplicas guardadas antes de agregar no_estimable pasaron la
+    # verificación de rango completo en todos los pares: son estimables.
+    for v in surrogates.VERSIONES:
+        if f"no_estimable_{v}" not in tabla.columns:
+            tabla[f"no_estimable_{v}"] = 0
     return tabla.to_dict("records")
 
 
@@ -166,23 +189,47 @@ def correr(real: pd.DataFrame, betas: pd.DataFrame, pares: dict[str, list[tuple[
             guardar(filas)
             print(f"  {len(filas)}/{len(secuencia())} guardadas (efecto {efecto}, réplica {i}; "
                   f"{time.perf_counter() - t0:.0f} s en esta sesión)", flush=True)
-    resumen()
+    resumen(real, betas)
 
 
-def resumen() -> None:
+def semanas_destino_en_0(tabla: pd.DataFrame, real: pd.DataFrame, betas: pd.DataFrame) -> pd.Series:
+    """
+    Semanas con el tópico destino en 0 tras el piso (igual a sus celdas
+    corregidas), regenerando la serie de cada réplica. Comprueba que el total
+    de celdas corregidas coincida con la columna celdas_piso.
+    """
+    semanas = []
+    for fila in tabla.itertuples(index=False):
+        x, corregidas, par, _ = planted.generar_replica(fila.efecto, fila.indice, real, betas)
+        assert corregidas == fila.celdas_piso and par == (fila.origen, fila.destino), \
+            f"{fila.efecto} {fila.indice}: la réplica regenerada no coincide con la guardada"
+        semanas.append(int((x[fila.destino] == 0).sum()))
+    return pd.Series(semanas, index=tabla.index)
+
+
+def resumen(real: pd.DataFrame, betas: pd.DataFrame) -> None:
     tabla = leer_csv(RUTA_REPLICAS)
     assert len(tabla) == len(secuencia()), f"{len(tabla)} réplicas, faltan para {len(secuencia())}"
+    tabla["semanas_destino_en_0"] = semanas_destino_en_0(tabla, real, betas)
+    columnas_no_estimable = [f"no_estimable_{v}" for v in surrogates.VERSIONES]
+    tabla["no_estimable"] = tabla[columnas_no_estimable].max(axis=1)
     por_version = []
     por_tamano = []
     for efecto, g in tabla.groupby("efecto", sort=False):
         for v in surrogates.VERSIONES:
             por_version.append({"efecto": efecto, "version": v, "n_replicas": len(g),
+                                "n_no_estimables": int(g[f"no_estimable_{v}"].sum()),
                                 "tasa_deteccion_plantado_BH": g[f"rechaza_plantado_{v}"].mean(),
                                 "efecto_observado_medio": g[f"efecto_plantado_{v}"].mean(),
                                 "p_plantado_medio": g[f"p_plantado_{v}"].mean(),
                                 "rechazos_no_plantados_medio": g[f"rechazos_no_plantados_{v}"].mean()})
+        estimables = g[g["no_estimable"] == 0]
         por_tamano.append({"efecto": efecto, "n_replicas": len(g),
+                           "n_replicas_no_estimables": int(g["no_estimable"].sum()),
                            "tasa_deteccion_regla_2_versiones": g["detectado_regla"].mean(),
+                           "tasa_deteccion_regla_sin_no_estimables": estimables["detectado_regla"].mean(),
+                           "fraccion_destino_en_0_mas_de_mitad": float((g["semanas_destino_en_0"] > len(real) / 2).mean()),
+                           "celdas_piso_destino_media": g["semanas_destino_en_0"].mean(),
                            "celdas_piso_total": int(g["celdas_piso"].sum()),
                            "celdas_piso_media": g["celdas_piso"].mean()})
     tabla_version = pd.DataFrame(por_version)
@@ -191,9 +238,13 @@ def resumen() -> None:
     tabla_tamano.to_csv(RUTA_RESUMEN_TAMANO, index=False)
 
     print(f"\n=== Por tamaño y versión ({RUTA_RESUMEN_VERSION.name}) ===")
-    print(tabla_version.to_string(index=False))
+    with pd.option_context("display.width", 250):
+        print(tabla_version.to_string(index=False))
     print(f"\n=== Por tamaño ({RUTA_RESUMEN_TAMANO.name}) ===")
-    print(tabla_tamano.to_string(index=False))
+    print("tasa_deteccion_regla_2_versiones: principal, incluye las réplicas no estimables como no detectadas;")
+    print("tasa_deteccion_regla_sin_no_estimables: sensibilidad, excluye las réplicas no estimables en alguna versión.")
+    with pd.option_context("display.width", 250):
+        print(tabla_tamano.to_string(index=False))
     cumplen = tabla_tamano[tabla_tamano["tasa_deteccion_regla_2_versiones"] >= TASA_MINIMA]
     if cumplen.empty:
         emd = "ninguno de los tamaños probados"
@@ -214,11 +265,10 @@ def main() -> None:
     pares = pares_por_version(list(real.columns))
     assert {v: len(p) for v, p in pares.items()} == M_FAMILIA, "pares por versión distintos de m"
 
-    if args.resumen:
-        resumen()
-        return
     betas = obtener_betas(real)
-    if args.medir:
+    if args.resumen:
+        resumen(real, betas)
+    elif args.medir:
         medir(args.medir, real, betas, pares)
     else:
         correr(real, betas, pares)
