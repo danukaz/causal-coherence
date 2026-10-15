@@ -31,6 +31,7 @@ Uso:
   python scripts/candidatas_grillas.py --medir 3     tiempo; no guarda réplicas
   python scripts/candidatas_grillas.py               corrida completa (reanuda)
   python scripts/candidatas_grillas.py --resumen     tablas desde lo guardado
+  --candidatas 2D_K5 3D_K5 ...   limita cualquiera de los tres últimos modos a esas candidatas
 """
 
 import argparse
@@ -226,18 +227,18 @@ def procesar(cand: str, control: str, efecto: str, indice: int, tabla_betas: pd.
     return fila, arreglos
 
 
-def unidades() -> list[tuple[str, str, str]]:
-    return [(cand, control, e) for cand in CANDIDATAS for control in CONTROLES for e in EFECTOS]
+def unidades(cands: list[str] | None = None) -> list[tuple[str, str, str]]:
+    return [(cand, control, e) for cand in (cands or list(CANDIDATAS)) for control in CONTROLES for e in EFECTOS]
 
 
 def rutas(cand: str, control: str, e: str) -> tuple[Path, Path]:
     return SALIDA / f"{cand}_{control}_e{e}.csv", SALIDA / f"{cand}_{control}_e{e}.npz"
 
 
-def correr() -> None:
+def correr(cands: list[str] | None = None) -> None:
     tabla_betas = betas()
     t0 = time.perf_counter()
-    for cand, control, e in unidades():
+    for cand, control, e in unidades(cands):
         ruta_csv, ruta_npz = rutas(cand, control, e)
         filas: list[dict[str, object]] = []
         arreglos: dict[str, list[np.ndarray]] = {}
@@ -264,14 +265,14 @@ def correr() -> None:
                 pd.DataFrame(filas).to_csv(tmp, index=False)
                 os.replace(tmp, ruta_csv)
         print(f"  {cand} {control} efecto {e}: {n}/{n} ({time.perf_counter() - t0:.0f} s en esta sesión)", flush=True)
-    resumen()
+    resumen(cands)
 
 
-def medir(n: int) -> None:
+def medir(n: int, cands: list[str] | None = None) -> None:
     tabla_betas = betas()
     total = 0.0
     por_cand: dict[str, float] = {}
-    for cand, control, e in unidades():
+    for cand, control, e in unidades(cands):
         tiempos = []
         for i in range(n):
             t0 = time.perf_counter()
@@ -285,7 +286,7 @@ def medir(n: int) -> None:
     print("\nPor candidata y control:")
     for clave, s in por_cand.items():
         print(f"  {clave}: {s / 60:.1f} min")
-    print(f"Total ({sum(EFECTOS.values()) * len(CANDIDATAS) * len(CONTROLES)} réplicas): {total / 60:.1f} min")
+    print(f"Total ({sum(EFECTOS.values()) * len(cands or CANDIDATAS) * len(CONTROLES)} réplicas): {total / 60:.1f} min")
 
 
 # ---------------------------------------------------------------------------
@@ -417,10 +418,12 @@ def verificar() -> bool:
 # Resumen
 # ---------------------------------------------------------------------------
 
-def resumen() -> None:
+def resumen(cands: list[str] | None = None) -> None:
+    """Tablas de las candidatas dadas (todas por defecto)."""
+    cands = cands or list(CANDIDATAS)
     salidas: dict[str, pd.DataFrame] = {}
     filas = []
-    for cand in CANDIDATAS:
+    for cand in cands:
         _, n_t = serie_real(cand)
         s = np.log1p(n_t)
         filas.append({"candidata": cand, "ventanas": len(s),
@@ -428,7 +431,7 @@ def resumen() -> None:
     salidas["a_ciclo_semanal"] = pd.DataFrame(filas)
 
     cal, pos, apt = [], [], []
-    for cand in CANDIDATAS:
+    for cand in cands:
         for control in CONTROLES:
             t0_ = leer_csv(rutas(cand, control, "0.0")[0])
             assert len(t0_) == EFECTOS["0.0"], f"{cand} {control} 0.0 incompleta"
@@ -460,7 +463,7 @@ def resumen() -> None:
     salidas["c_calibracion"] = pd.DataFrame(cal)
     salidas["d_control_positivo"] = pd.DataFrame(pos)
     salidas["aptitud"] = pd.DataFrame(apt)
-    salidas["betas_resumen"] = betas().groupby(["candidata", "efecto"], sort=False).agg(
+    salidas["betas_resumen"] = betas()[lambda t: t["candidata"].isin(cands)].groupby(["candidata", "efecto"], sort=False).agg(
         pares=("beta", "size"), beta_min=("beta", "min"), beta_mediana=("beta", "median"), beta_max=("beta", "max"),
         error_max=("error_relativo", "max"), radio_max=("radio_espectral", "max")).reset_index()
     SALIDA.mkdir(parents=True, exist_ok=True)
@@ -480,15 +483,17 @@ def main() -> None:
     grupo.add_argument("--verificar", action="store_true")
     grupo.add_argument("--medir", type=int, metavar="N")
     grupo.add_argument("--resumen", action="store_true")
+    parser.add_argument("--candidatas", nargs="+", choices=list(CANDIDATAS), metavar="CANDIDATA",
+                        help=f"subconjunto de candidatas ({', '.join(CANDIDATAS)}); por defecto, todas")
     args = parser.parse_args()
     if args.verificar:
         verificar()
     elif args.medir:
-        medir(args.medir)
+        medir(args.medir, args.candidatas)
     elif args.resumen:
-        resumen()
+        resumen(args.candidatas)
     else:
-        correr()
+        correr(args.candidatas)
 
 
 if __name__ == "__main__":
